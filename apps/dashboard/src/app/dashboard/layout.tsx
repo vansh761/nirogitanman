@@ -16,9 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let notifications: Awaited<ReturnType<typeof getNotificationsForUser>> = [];
   try {
     if (session.user.id) notifications = await getNotificationsForUser(session.user.id as string);
-  } catch {
-    // dashboard still renders with an empty notification list if DB is unreachable
-  }
+  } catch {}
 
   return (
     <Providers>
