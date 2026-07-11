@@ -10,7 +10,7 @@ export default async function AnalyticsPage() {
     { label: "Total appointments", value: s.appointments },
     { label: "Niro AI messages logged", value: s.aiChats },
     { label: "Published blog posts", value: s.publishedBlogs },
-    { label: "Revenue collected", value: ₹${s.revenue} },
+    { label: "Revenue collected", value: `₹${s.revenue}` },
   ];
   return (
     <div className="space-y-6">
