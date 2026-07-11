@@ -8,6 +8,8 @@
     "start": "next start -p 3000",
     "lint": "eslint"
   },
+
+  
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
     "@fontsource/poppins": "^5.2.7",
@@ -31,8 +33,7 @@
     "react-markdown": "^10.1.0",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3",
-    "zustand": "^5.0.14",
-    "packageManager": "pnpm@9.15.0"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -44,7 +45,12 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.20",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "packageManager": "pnpm@9.15.0"
+    "typescript": "^5"
+  },
+  {
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": "20.x"
   }
 }
+
