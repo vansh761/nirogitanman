@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nirotanman.example.com/sitemap.xml

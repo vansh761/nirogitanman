@@ -1,0 +1,359 @@
+// =====================================================================
+// Niro Ayurveda — Database Schema (PostgreSQL + Prisma)
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------
+
+enum Role {
+  GUEST
+  FREE_USER
+  PAID_USER
+  DOCTOR
+  EDITOR
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PostStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum NotificationType {
+  APPOINTMENT
+  SYSTEM
+  BLOG
+  PAYMENT
+  MESSAGE
+}
+
+// ---------------------------------------------------------------------
+// CORE USER + AUTH
+// ---------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String?
+  avatarUrl     String?
+  role          Role     @default(FREE_USER)
+  isActive      Boolean  @default(true)
+  emailVerified DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  doctorProfile   Doctor?
+  patientProfile  Patient?
+  blogs           Blog[]         @relation("AuthorBlogs")
+  articles        Article[]      @relation("AuthorArticles")
+  subscriptions   Subscription[]
+  payments        Payment[]
+  aiChats         AiChat[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  testimonials    Testimonial[]
+  contactMessages ContactMessage[]
+
+  @@index([role])
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------
+// DOCTORS + PATIENTS
+// ---------------------------------------------------------------------
+
+model Doctor {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String
+  qualifications String
+  experienceYrs  Int      @default(0)
+  bio            String?
+  consultFee     Decimal  @db.Decimal(10, 2) @default(0)
+  rating         Float    @default(0)
+  isVerified     Boolean  @default(false)
+  availability   Json?    // { "mon": ["10:00-13:00"], "tue": [...] }
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  appointments Appointment[]
+
+  @@index([specialization])
+  @@map("doctors")
+}
+
+model Patient {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth DateTime?
+  gender      String?
+  phone       String?
+  address     String?
+  medicalTags String[] // e.g. ["diabetes", "hypertension"]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  appointments Appointment[]
+
+  @@map("patients")
+}
+
+// ---------------------------------------------------------------------
+// APPOINTMENTS
+// ---------------------------------------------------------------------
+
+model Appointment {
+  id         String            @id @default(cuid())
+  patientId  String
+  patient    Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId   String
+  doctor     Doctor            @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  date       DateTime
+  slot       String            // e.g. "10:30-11:00"
+  symptoms   String
+  notes      String?
+  status     AppointmentStatus @default(PENDING)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  payment Payment?
+
+  @@index([doctorId, date])
+  @@index([patientId])
+  @@map("appointments")
+}
+
+// ---------------------------------------------------------------------
+// BILLING
+// ---------------------------------------------------------------------
+
+model Payment {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointmentId String?       @unique
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id])
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("INR")
+  status        PaymentStatus @default(PENDING)
+  provider      String?       // razorpay / stripe / mock
+  providerRefId String?
+  createdAt     DateTime      @default(now())
+
+  @@index([userId])
+  @@map("payments")
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      String             // "free" | "paid_monthly" | "paid_yearly"
+  status    SubscriptionStatus @default(TRIAL)
+  startedAt DateTime           @default(now())
+  expiresAt DateTime?
+  createdAt DateTime           @default(now())
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+// ---------------------------------------------------------------------
+// CONTENT / BLOG CMS
+// ---------------------------------------------------------------------
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  blogs    Blog[]
+  articles Article[]
+
+  @@map("categories")
+}
+
+model Blog {
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  excerpt       String?
+  contentMd     String     // markdown body
+  featuredImage String?
+  categoryId    String?
+  category      Category?  @relation(fields: [categoryId], references: [id])
+  tags          String[]
+  status        PostStatus @default(DRAFT)
+  authorId      String
+  author        User       @relation("AuthorBlogs", fields: [authorId], references: [id])
+  seoTitle      String?
+  seoDesc       String?
+  publishedAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([status])
+  @@index([categoryId])
+  @@map("blogs")
+}
+
+model Article {
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  contentMd     String
+  featuredImage String?
+  categoryId    String?
+  category      Category?  @relation(fields: [categoryId], references: [id])
+  status        PostStatus @default(DRAFT)
+  authorId      String
+  author        User       @relation("AuthorArticles", fields: [authorId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("articles")
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  name      String
+  role      String?
+  message   String
+  rating    Int      @default(5)
+  avatarUrl String?
+  isPublished Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("testimonials")
+}
+
+model Faq {
+  id       String @id @default(cuid())
+  question String
+  answer   String
+  order    Int    @default(0)
+
+  @@map("faqs")
+}
+
+// ---------------------------------------------------------------------
+// AI ASSISTANT
+// ---------------------------------------------------------------------
+
+model AiChat {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  sessionId String
+  role      String   // "user" | "assistant"
+  content   String
+  model     String   @default("llama-3.3-70b-versatile")
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+  @@map("ai_chats")
+}
+
+// ---------------------------------------------------------------------
+// COMMS / SYSTEM
+// ---------------------------------------------------------------------
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  name      String
+  email     String
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // e.g. "blog.publish", "user.role_change"
+  entity    String?
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value Json
+
+  @@map("settings")
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("newsletter_subscribers")
+}

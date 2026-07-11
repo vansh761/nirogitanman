@@ -1,0 +1,154 @@
+// Paste this into eraser.io -> new diagram -> Entity Relationship Diagram (DSL)
+// Naming: snake_case table names to match Prisma @@map(...) directives.
+
+users [icon: user, color: green] {
+  id string pk
+  name string
+  email string unique
+  password_hash string
+  role string // GUEST | FREE_USER | PAID_USER | DOCTOR | EDITOR | ADMIN
+  is_active boolean
+  created_at timestamp
+}
+
+doctors [icon: stethoscope] {
+  id string pk
+  user_id string unique
+  specialization string
+  experience_yrs int
+  consult_fee decimal
+  rating float
+  is_verified boolean
+}
+
+patients [icon: user-check] {
+  id string pk
+  user_id string unique
+  date_of_birth timestamp
+  gender string
+  phone string
+}
+
+appointments [icon: calendar] {
+  id string pk
+  patient_id string
+  doctor_id string
+  date timestamp
+  slot string
+  symptoms string
+  status string // PENDING | CONFIRMED | COMPLETED | CANCELLED | NO_SHOW
+  created_at timestamp
+}
+
+payments [icon: credit-card] {
+  id string pk
+  user_id string
+  appointment_id string unique
+  amount decimal
+  status string // PENDING | SUCCESS | FAILED | REFUNDED
+  created_at timestamp
+}
+
+subscriptions [icon: repeat] {
+  id string pk
+  user_id string
+  plan string
+  status string // ACTIVE | CANCELLED | EXPIRED | TRIAL
+  expires_at timestamp
+}
+
+categories [icon: tag] {
+  id string pk
+  name string unique
+  slug string unique
+}
+
+blogs [icon: file-text] {
+  id string pk
+  title string
+  slug string unique
+  category_id string
+  author_id string
+  status string // DRAFT | IN_REVIEW | PUBLISHED | ARCHIVED
+  published_at timestamp
+}
+
+articles [icon: file] {
+  id string pk
+  title string
+  slug string unique
+  category_id string
+  author_id string
+  status string
+}
+
+testimonials [icon: message-square] {
+  id string pk
+  user_id string
+  name string
+  rating int
+  is_published boolean
+}
+
+faqs [icon: help-circle] {
+  id string pk
+  question string
+  answer string
+  order int
+}
+
+ai_chats [icon: cpu] {
+  id string pk
+  user_id string
+  session_id string
+  role string // user | assistant
+  content string
+  created_at timestamp
+}
+
+contact_messages [icon: mail] {
+  id string pk
+  user_id string
+  name string
+  email string
+  is_read boolean
+}
+
+notifications [icon: bell] {
+  id string pk
+  user_id string
+  type string // APPOINTMENT | SYSTEM | BLOG | PAYMENT | MESSAGE
+  is_read boolean
+}
+
+audit_logs [icon: shield] {
+  id string pk
+  user_id string
+  action string
+  entity string
+  created_at timestamp
+}
+
+settings [icon: settings] {
+  id string pk
+  key string unique
+  value json
+}
+
+// Relationships
+doctors.user_id > users.id
+patients.user_id > users.id
+appointments.patient_id > patients.id
+appointments.doctor_id > doctors.id
+payments.user_id > users.id
+payments.appointment_id > appointments.id
+subscriptions.user_id > users.id
+blogs.category_id > categories.id
+blogs.author_id > users.id
+articles.category_id > categories.id
+articles.author_id > users.id
+testimonials.user_id > users.id
+ai_chats.user_id > users.id
+contact_messages.user_id > users.id
+notifications.user_id > users.id
+audit_logs.user_id > users.id

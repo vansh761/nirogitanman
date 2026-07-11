@@ -1,0 +1,12 @@
+{
+  "name": "Niro Ayurveda",
+  "short_name": "Niro Ayurveda",
+  "description": "Book verified Ayurvedic doctors and get AI-guided wellness plans.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBFBF7",
+  "theme_color": "#128A5D",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
