@@ -1,36 +1,30 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { NAV_ITEMS, type Role } from "@/lib/rbac";
-import { getNotificationsForUser } from "database";
-import { Providers } from "@/components/providers";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Topbar } from "@/components/layout/topbar";
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-  const role = (session.user as { role?: Role }).role ?? "FREE_USER"; 
-  const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
-  let notifications: Awaited<ReturnType<typeof getNotificationsForUser>> = [];
-  try {
-    if (session.user.id) notifications = await getNotificationsForUser(session.user.id as string);
-  } catch {
-    // dashboard still renders with an empty notification list if DB is unreachable
-  }
+import type { Metadata } from "next";
+import "@fontsource/space-grotesk/500.css";
+import "@fontsource/space-grotesk/600.css";
+import "@fontsource/space-grotesk/700.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/poppins/400.css";
+import "@fontsource/poppins/500.css";
+import "@fontsource/poppins/600.css";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+
+export const metadata: Metadata = {
+  title: "Niro Ayurveda — Dashboard",
+  description: "Admin, editor and doctor console for Niro Ayurveda.",
+  robots: { index: false, follow: false },
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <Providers>
-      <div className="flex min-h-screen">
-        <Sidebar items={items} userName={session.user.name ?? "User"} role={role} />
-        <div className="flex-1 flex flex-col">
-          <Topbar
-            navItems={items}
-            userName={session.user.name ?? "User"}
-            userEmail={session.user.email ?? ""}
-            role={role}
-            initialNotifications={notifications}
-          />
-          <main className="flex-1 p-6 bg-forest/[0.015] dark:bg-mint/[0.015]">{children}</main>
-        </div>
-      </div>
-    </Providers>
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-body antialiased bg-canvas text-forest dark:bg-canvas-dark dark:text-mint">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }
