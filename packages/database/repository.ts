@@ -89,8 +89,10 @@ export async function createAppointment(input: {
   if (users.length === 0) {
     userId = `guest-${Date.now()}`;
     await query(
-      `INSERT INTO users (id, name, email, role) VALUES ($1, $2, $3, 'FREE_USER')`,
-      [userId, input.name, email]
+  `INSERT INTO users
+   (id, name, email, role, "createdAt", "updatedAt")
+   VALUES ($1, $2, $3, 'FREE_USER', NOW(), NOW())`,
+  [userId, input.name, email]
     );
   } else {
     userId = users[0].id;
