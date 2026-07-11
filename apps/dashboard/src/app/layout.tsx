@@ -8,7 +8,7 @@ import { Topbar } from "@/components/layout/topbar";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const role = (session.user as { role?: Role }).role ?? "FREE_USER";
+  const role = (session.user as { role?: Role }).role ?? "FREE_USER"; 
   const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
   let notifications: Awaited<ReturnType<typeof getNotificationsForUser>> = [];
   try {
