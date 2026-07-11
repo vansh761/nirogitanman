@@ -8,13 +8,6 @@
     "start": "next start -p 3000",
     "lint": "eslint"
   },
-
-  {
-  "packageManager": "pnpm@9.15.0",
-  "engines": {
-    "node": "20.x"
-  }
-}
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
     "@fontsource/poppins": "^5.2.7",
@@ -51,7 +44,5 @@
     "eslint-config-next": "15.5.20",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  
+  }
 }
-
